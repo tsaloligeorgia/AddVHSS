@@ -45,7 +45,7 @@ CFLAGS := -std=c11
 # C++ flags
 CXXFLAGS := -std=c++11
 # C/C++ flags
-CPPFLAGS := -g -Wall -Wextra -pedantic
+CPPFLAGS := -g -O3 -Wall -Wextra -pedantic
 # linker flags
 LDFLAGS :=
 # linker flags: libraries to link (e.g. -lfoo)
