@@ -20,15 +20,26 @@
 
 using namespace std;
 
+void print_parameters(){
+	std::cout << "-------------------------" << std::endl;
+	std::cout << "--- \tParameters\t ---" << std::endl;
+	std::cout << "--- \tNR_CLIENTS\t ---\t" << NR_CLIENTS << std::endl;
+	std::cout << "--- \tNR_SERVERS\t ---\t" << NR_SERVERS << std::endl;
+	std::cout << "--- \tFINITE_FIELD\t ---\t" << FINITE_FIELD << std::endl;
+	std::cout << "--- \tSECURITY\t ---\t" << SECURITY << std::endl;
+	std::cout << "-------------------------" << std::endl;
+}
+
 // Driver program
 int main() {
+	print_parameters();
 
 	VHSS_TSS tss;
-	mpz_class p = Utils::random_prime(128);
+	mpz_class p = Utils::random_prime(SECURITY);
 	cout << "p: " << p << endl;
-	mpz_class q = Utils::random_prime(128);
+	mpz_class q = Utils::random_prime(SECURITY);
 	while (mpz_cmp(p.get_mpz_t(), q.get_mpz_t()) == 0) {
-		q = Utils::random_prime(128);
+		q = Utils::random_prime(SECURITY);
 	}
 	cout << "q: " << q << endl;
 
