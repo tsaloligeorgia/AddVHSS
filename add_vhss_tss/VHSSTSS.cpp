@@ -49,9 +49,6 @@ void VHSS_TSS::gen_shares_threshold(mpz_class secret_input, mpz_class sk,
 	Polynomial polynomial(THRESHOLD_CLIENTS, mpz_class(FINITE_FIELD));
 	polynomial.setCoeff(secret_input, 0);
 
-	//polynomial.print_polynomial();
-
-	//mpfq_p_127_1_poly_print(this->k, polynomial);
 
 	Utils util(FINITE_FIELD);
 

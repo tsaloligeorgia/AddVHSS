@@ -1,5 +1,8 @@
 #include<bits/stdc++.h>
 #include <gmpxx.h>
+#include <vector>
+#include <map>
+#include <chrono>
 
 #include "params.h"
 #include "Client.h"
@@ -11,6 +14,7 @@
 #include "Proof.h"
 
 using namespace std;
+using namespace std::chrono;
 
 void print_parameters() {
 	std::cout << "-------------------------" << std::endl;
@@ -66,17 +70,24 @@ int main() {
 
 	SecretKey sk;
 	VerificationKey vk;
+
+	auto start_key_setup = high_resolution_clock::now();
 	lhs.key_gen(p, q, &sk, &vk);
+	auto final_key_setup = high_resolution_clock::now();
+	auto duration_key_setup = duration_cast<microseconds>(
+			final_key_setup - start_key_setup);
+	cout << "Time taken by generate_shares: " << duration_key_setup.count()
+			<< " microseconds" << endl;
 
 	print_secret(&sk);
 	print_verification(&vk);
 
 	for (int i = 1; i < NR_CLIENTS + 1; i++) {
 		if (i != (NR_CLIENTS)) {
-			Client c(i, mpz_class(i + 1), mpz_class(1), lhs);
+			Client c(i, mpz_class(i + 1), mpz_class(0), lhs);
 			clients.push_back(c);
 		} else {
-			Client c(i, mpz_class(i + 1), mpz_class(7665587881), lhs);
+			Client c(i, mpz_class(i + 1), mpz_class(0), lhs);
 			clients.push_back(c);
 		}
 	}
@@ -87,12 +98,19 @@ int main() {
 	}
 
 	cout << "Generating Shares " << endl;
+	std::vector<microseconds> gen_shares_timing;
 	for (int i = 0; i < NR_CLIENTS; i++) {
 		Client c = clients[i];
 		std::map<int, mpz_class> shared_keys;
 		std::map<int, mpz_class> shares;
 
+
+		auto start_gen_shares = high_resolution_clock::now();
 		c.generate_shares(&shares);
+		auto final_gen_shares = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(
+				final_gen_shares - start_gen_shares);
+		gen_shares_timing.push_back(duration);
 		for (int j = 0; j < NR_SERVERS; j++) {
 			Server s = servers[j];
 			s.setShare(c.getI(), shares[s.getJ()]);
@@ -100,14 +118,25 @@ int main() {
 		}
 
 	}
+
 	cout << "Finished Shares " << endl;
+	sort(gen_shares_timing.begin(), gen_shares_timing.end());
+	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
+			<< " microseconds" << endl;
 
 	cout << "Generate Partial Evals " << endl;
 
 	std::map<int, mpz_class> partial_evals;
 	for (int j = 0; j < NR_SERVERS; j++) {
 		Server s = servers[j];
+		auto start_partial_eval = high_resolution_clock::now();
 		mpz_class partial = lhs.partial_eval(s.getJ(), s.getShares());
+		auto final_partial_eval = high_resolution_clock::now();
+		auto duration_eval = duration_cast<microseconds>(
+				final_partial_eval - start_partial_eval);
+
+		cout << "Time taken by partial_eval: " << duration_eval.count()
+				<< " microseconds" << endl;
 
 		partial_evals.insert(std::pair<int, mpz_class>(s.getJ(), partial));
 	}
@@ -115,8 +144,15 @@ int main() {
 	cout << "Finish Partial Evals " << endl;
 
 	cout << "Generate Final Evals " << endl;
+	auto start_final_eval = high_resolution_clock::now();
 	mpz_class y = lhs.final_eval(partial_evals);
+	auto final_final_eval = high_resolution_clock::now();
+	auto duration_fina_eval = duration_cast<nanoseconds>(
+			final_final_eval - start_final_eval);
 	cout << "Finish Final Evals " << endl;
+	cout << "Time taken by final_eval: " << duration_fina_eval.count()
+			<< " nanoseconds" << endl;
+
 	cout << "y : " << y << std::endl;
 
 	cout << "Generate Partial Proofs  " << endl;
@@ -127,13 +163,26 @@ int main() {
 		if (i != (NR_CLIENTS)) {
 			mpz_class ri(1);
 			ris = ris + ri;
+			auto start_partial_proof = high_resolution_clock::now();
 			lhs.partial_proof(sk, vk, mpz_class(3), mpz_class(i + 1), i,
 					&sigma);
+			auto final_partial_proof = high_resolution_clock::now();
+			auto duration_proof = duration_cast<microseconds>(
+					final_partial_proof - start_partial_proof);
+
+			cout << "Time taken by partial_proof: " << duration_proof.count()
+					<< " microseconds" << endl;
 			sigmas.push_back(sigma);
 		} else {
-
+			auto start_partial_proof = high_resolution_clock::now();
 			lhs.partial_proof(sk, vk, mpz_class(3), mpz_class(i + 1), i,
 					&sigma);
+			auto final_partial_proof = high_resolution_clock::now();
+			auto duration_proof = duration_cast<microseconds>(
+					final_partial_proof - start_partial_proof);
+
+			cout << "Time taken by partial_proof: " << duration_proof.count()
+					<< " microseconds" << endl;
 			sigmas.push_back(sigma);
 
 		}
@@ -141,13 +190,27 @@ int main() {
 
 	cout << "Finish Partial Proofs  " << endl;
 	Proof final_p;
+	auto start_final_proof = high_resolution_clock::now();
 	lhs.final_proof(vk, mpz_class(2), sigmas, &final_p);
+	auto final_final_proof = high_resolution_clock::now();
+	auto duration_final_proof = duration_cast<microseconds>(
+			final_final_proof - start_final_proof);
+
+	cout << "Time taken by final_proof: " << duration_final_proof.count()
+			<< " microseconds" << endl;
 
 	cout << "Generate Final Proof  " << endl;
 
 	cout << "Finish Final Proof  " << endl;
 
+	auto start_verify = high_resolution_clock::now();
 	int result = lhs.verify(vk, final_p, y);
+	auto final_verify = high_resolution_clock::now();
+	auto duration_verify = duration_cast<microseconds>(
+			final_verify - start_verify);
+
+	cout << "Time taken by verify: " << duration_verify.count()
+			<< " microseconds" << endl;
 	if (result == 1) {
 		std::cout << "PERFECT!!! " << std::endl;
 		std::cout << "y = " << y << std::endl;
