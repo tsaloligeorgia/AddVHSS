@@ -24,9 +24,31 @@ void print_parameters() {
 	std::cout << "-------------------------" << std::endl;
 }
 
-// Driver program
+void read_file(std::vector<mpz_class> *to_save) {
+	std::vector<mpz_class> to_save_t;
+
+	ifstream myfile("result.txt");
+	if (myfile.is_open()) {
+		string line;
+		getline(myfile, line);
+		for (int i = 0; i < NR_CLIENTS + 10; i++) {
+			getline(myfile, line);
+			std::string::size_type sz;     // alias of size_t
+			float converted = std::stof(line, &sz);
+			mpz_class changed_value(converted * 100);
+			to_save_t.push_back(changed_value);
+
+		}
+		myfile.close();
+	}
+	*to_save = to_save_t;
+}
 int main() {
 	print_parameters();
+
+	std::vector<mpz_class> input_data;
+
+	read_file(&input_data);
 
 	VHSS_TSS tss;
 	mpz_class p = Utils::random_prime(SECURITY);
@@ -60,17 +82,17 @@ int main() {
 		key_gen_timing.push_back(duration_key_setup);
 
 		if (i != NR_CLIENTS) {
-			mpz_class R_i = 0;//Utils::generate_random(30, phi_field);
-			//cout << "R_i " << R_i << endl;
-			R_is = R_is + R_i;
+			mpz_class r_i = Utils::random_element();
+			R_is = R_is + r_i;
 
-			Client c(i, mpz_class(2), sk, pk, R_i, tss);
+			Client c(i, input_data[i-1], sk, pk, r_i, tss);
 			pub_keys.push_back(pk);
 			clients.push_back(c);
 		} else {
-			mpz_class R_i = 0;//(((R_is / phi_field) * phi_field) - R_is)	% phi_field;
+
+			mpz_class R_i = (((R_is / phi_field) * phi_field) - R_is) % phi_field;
 			//cout << "R_i " << R_i << endl;
-			Client c1(i, mpz_class(2), sk, pk, R_i, tss);
+			Client c1(i, input_data[i-1], sk, pk, R_i, tss);
 			pub_keys.push_back(pk);
 			clients.push_back(c1);
 

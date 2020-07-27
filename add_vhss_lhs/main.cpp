@@ -3,6 +3,8 @@
 #include <vector>
 #include <map>
 #include <chrono>
+#include <string>
+#include <fstream>
 
 #include "params.h"
 #include "Client.h"
@@ -49,9 +51,32 @@ void print_verification(VerificationKey *vk) {
 
 }
 
-// Driver program
+void read_file(std::vector<mpz_class> *to_save) {
+	std::vector<mpz_class> to_save_t;
+
+	ifstream myfile("result.txt");
+	if (myfile.is_open()) {
+		string line;
+		getline(myfile, line);
+		for (int i = 0; i < NR_CLIENTS + 10; i++) {
+			getline(myfile, line);
+			std::string::size_type sz;     // alias of size_t
+			float converted = std::stof(line, &sz);
+			mpz_class changed_value(converted * 100);
+			to_save_t.push_back(changed_value);
+
+		}
+		myfile.close();
+	}
+	*to_save = to_save_t;
+
+}
 int main() {
 	print_parameters();
+
+	std::vector<mpz_class> input_data;
+
+	read_file(&input_data);
 
 	VHSS_LHS lhs;
 	mpz_class p = Utils::generate_safe_prime(SECURITY, mpz_class(2)); //Utils::generate_safe_prime(32, mpz_class(2));
@@ -81,13 +106,17 @@ int main() {
 
 	print_secret(&sk);
 	print_verification(&vk);
+	mpz_class R_is(0);
 
 	for (int i = 1; i < NR_CLIENTS + 1; i++) {
 		if (i != (NR_CLIENTS)) {
-			Client c(i, mpz_class(2), mpz_class(0), lhs);
+			mpz_class r_i = Utils::random_element();
+			R_is = R_is + r_i;
+			Client c(i, input_data[i-1], r_i, lhs);
 			clients.push_back(c);
 		} else {
-			Client c(i, mpz_class(2), mpz_class(0), lhs);
+			mpz_class r_i = (R_is / (q - 1)) * (q - 1) - R_is;
+			Client c(i,input_data[i-1], r_i, lhs);
 			clients.push_back(c);
 		}
 	}
@@ -103,7 +132,6 @@ int main() {
 		Client c = clients[i];
 		std::map<int, mpz_class> shared_keys;
 		std::map<int, mpz_class> shares;
-
 
 		auto start_gen_shares = high_resolution_clock::now();
 		c.generate_shares(&shares);
@@ -121,8 +149,9 @@ int main() {
 
 	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
-	cout << "Time taken by generate_shares: " << gen_shares_timing[NR_CLIENTS/2].count()
-			<< " microseconds" << endl;
+	cout << "Time taken by generate_shares: "
+			<< gen_shares_timing[NR_CLIENTS / 2].count() << " microseconds"
+			<< endl;
 
 	cout << "Generate Partial Evals " << endl;
 
@@ -161,7 +190,7 @@ int main() {
 	mpz_class ris = 0;
 	for (int i = 1; i < NR_CLIENTS + 1; i++) {
 		Proof sigma;
-		Client c = clients[i-1];
+		Client c = clients[i - 1];
 		if (i != (NR_CLIENTS)) {
 			mpz_class ri(1);
 			ris = ris + ri;
@@ -173,9 +202,9 @@ int main() {
 					final_partial_proof - start_partial_proof);
 
 			timing_partial_proofs.push_back(duration_proof);
-/*
-			cout << "Time taken by partial_proof: " << duration_proof.count()
-					<< " microseconds" << endl;*/
+			/*
+			 cout << "Time taken by partial_proof: " << duration_proof.count()
+			 << " microseconds" << endl;*/
 			sigmas.push_back(sigma);
 		} else {
 			auto start_partial_proof = high_resolution_clock::now();
@@ -185,8 +214,8 @@ int main() {
 			auto duration_proof = duration_cast<microseconds>(
 					final_partial_proof - start_partial_proof);
 
-/*			cout << "Time taken by partial_proof: " << duration_proof.count()
-					<< " microseconds" << endl;*/
+			/*			cout << "Time taken by partial_proof: " << duration_proof.count()
+			 << " microseconds" << endl;*/
 			sigmas.push_back(sigma);
 			timing_partial_proofs.push_back(duration_proof);
 
@@ -194,8 +223,9 @@ int main() {
 	}
 
 	sort(timing_partial_proofs.begin(), timing_partial_proofs.end());
-	cout << "Time taken by partial_proof: " << timing_partial_proofs[NR_CLIENTS/2].count()
-				<< " microseconds" << endl;
+	cout << "Time taken by partial_proof: "
+			<< timing_partial_proofs[NR_CLIENTS / 2].count() << " microseconds"
+			<< endl;
 
 	cout << "Finish Partial Proofs  " << endl;
 	Proof final_p;

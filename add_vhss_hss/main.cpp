@@ -2,6 +2,8 @@
 #include <gmpxx.h>
 #include <vector>
 #include <map>
+#include <fstream>
+#include <string>
 
 #include <chrono>
 using namespace std::chrono;
@@ -22,8 +24,33 @@ void print_parameters() {
 	std::cout << "-------------------------" << std::endl;
 }
 
+void read_file(std::vector<mpz_class> *to_save) {
+	std::vector<mpz_class> to_save_t;
+
+	ifstream myfile("result.txt");
+	if (myfile.is_open()) {
+		string line;
+		getline(myfile, line);
+		for (int i = 0; i < NR_CLIENTS + 10; i++) {
+			getline(myfile, line);
+			std::string::size_type sz;     // alias of size_t
+			float converted = std::stof(line, &sz);
+			mpz_class changed_value(converted * 100);
+			to_save_t.push_back(changed_value);
+
+		}
+		myfile.close();
+	}
+	*to_save = to_save_t;
+
+}
+
 int main() {
 	print_parameters();
+
+	std::vector<mpz_class> input_data;
+
+	read_file(&input_data);
 
 	std::vector<Client> clients;
 	std::vector<Server> servers;
@@ -37,11 +64,11 @@ int main() {
 		if (i != NR_CLIENTS) {
 			mpz_class r_i = Utils::random_element();
 			R_is = R_is + r_i;
-			Client c(i, mpz_class(2), r_i, vhss);
+			Client c(i, input_data[i - 1], r_i, vhss);
 			clients.push_back(c);
 		} else {
 			mpz_class r_i = (R_is / (q - 1)) * (q - 1) - R_is;
-			Client c(i, mpz_class(2), r_i, vhss);
+			Client c(i, input_data[i - 1], r_i, vhss);
 			clients.push_back(c);
 		}
 
@@ -77,13 +104,13 @@ int main() {
 	}
 	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
-	cout << "Time taken by generate_shares: " << gen_shares_timing[NR_CLIENTS/2].count()
-					<< " microseconds" << endl;
+	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
+			<< " microseconds" << endl;
 
 	/*for (microseconds duration : gen_shares_timing) {
-		cout << "Time taken by generate_shares: " << duration.count()
-				<< " microseconds" << endl;
-	}*/
+	 cout << "Time taken by generate_shares: " << duration.count()
+	 << " microseconds" << endl;
+	 }*/
 
 	std::cout << "starting paritals" << std::endl;
 	std::vector<mpz_class> partial_evals;

@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "polynomial.h"
+#include "params.h"
 
 class Utils {
 
@@ -161,6 +162,26 @@ public:
 		return to_return % field;
 	}
 	;
+
+	static mpz_class random_element() {
+
+		gmp_randstate_t state;
+		mpz_class field(FINITE_FIELD);
+		gmp_randinit_default(state);
+		unsigned long tmp = time(NULL) + 32;
+		gmp_randseed_ui(state, tmp);
+		mpz_t result;
+		mpz_init(result);
+		mpz_urandomb(result, state, 32);
+
+		mpz_class to_return(result);
+
+		gmp_randclear(state);
+		mpz_clear(result);
+
+		return to_return % field;
+
+	}
 
 private:
 
