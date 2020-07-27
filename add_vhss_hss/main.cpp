@@ -80,7 +80,6 @@ int main() {
 	}
 
 	std::vector<microseconds> gen_shares_timing;
-	cout << "Generating Shares " << endl;
 	std::vector<mpz_class> taus;
 	for (int i = 0; i < NR_CLIENTS; i++) {
 		Client c = clients[i];
@@ -102,7 +101,6 @@ int main() {
 		}
 
 	}
-	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
 	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
 			<< " microseconds" << endl;
@@ -112,9 +110,11 @@ int main() {
 	 << " microseconds" << endl;
 	 }*/
 
-	std::cout << "starting paritals" << std::endl;
 	std::vector<mpz_class> partial_evals;
 	std::vector<mpz_class> partial_proofs;
+
+	std::vector<microseconds> partial_evals_timing;
+	std::vector<microseconds> partial_proofs_timing;
 	for (Server s : servers) {
 		std::map<int, mpz_class> shares = s.getShares();
 		auto start_partial_proof = high_resolution_clock::now();
@@ -124,8 +124,9 @@ int main() {
 		auto duration_proof = duration_cast<microseconds>(
 				final_partial_proof - start_partial_proof);
 
-		cout << "Time taken by partial_proof: " << duration_proof.count()
-				<< " microseconds" << endl;
+		partial_proofs_timing.push_back(duration_proof);
+
+
 
 		auto start_partial_eval = high_resolution_clock::now();
 		mpz_class y_j = vhss.partial_eval(s.getJ(), shares);
@@ -134,16 +135,23 @@ int main() {
 		auto duration_eval = duration_cast<microseconds>(
 				final_partial_eval - start_partial_eval);
 
-		cout << "Time taken by partial_eval: " << duration_eval.count()
-				<< " microseconds" << endl;
+
+
+		partial_evals_timing.push_back(duration_eval);
 
 		partial_evals.push_back(y_j);
 		partial_proofs.push_back(sigma);
 
 	}
-	std::cout << "fnished paritals" << std::endl;
 
-	std::cout << "starting finals" << std::endl;
+	sort(partial_evals_timing.begin(), partial_evals_timing.end());
+	sort(partial_proofs_timing.begin(), partial_proofs_timing.end());
+
+	cout << "Time taken by partial_proof: " << partial_proofs_timing[NR_SERVERS/2].count()
+					<< " microseconds" << endl;
+
+	cout << "Time taken by partial_eval: " << partial_proofs_timing[NR_SERVERS/2].count()
+					<< " microseconds" << endl;
 
 	auto start_final_eval = high_resolution_clock::now();
 	mpz_class y = vhss.final_eval(partial_evals);
@@ -162,9 +170,7 @@ int main() {
 
 	cout << "Time taken by final_proof: " << duration_final_proof.count()
 			<< " nanoseconds" << endl;
-	std::cout << "end finals" << std::endl;
 
-	std::cout << "starting verify" << std::endl;
 	auto start_verify = high_resolution_clock::now();
 	int result = vhss.verify(taus, sigma, y);
 	auto final_verify = high_resolution_clock::now();
@@ -175,12 +181,10 @@ int main() {
 			<< " microseconds" << endl;
 
 	if (result == 1) {
-		std::cout << "PERFECT!" << std::endl;
 		std::cout << "y = " << (y % mpz_class(FINITE_FIELD)) << std::endl;
 	} else {
 		std::cout << "fail!" << std::endl;
 	}
-	std::cout << "end verify" << std::endl;
 
 	return 0;
 }

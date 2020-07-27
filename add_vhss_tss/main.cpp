@@ -52,12 +52,10 @@ int main() {
 
 	VHSS_TSS tss;
 	mpz_class p = Utils::random_prime(SECURITY);
-	cout << "p: " << p << endl;
 	mpz_class q = Utils::random_prime(SECURITY);
 	while (mpz_cmp(p.get_mpz_t(), q.get_mpz_t()) == 0) {
 		q = Utils::random_prime(SECURITY);
 	}
-	cout << "q: " << q << endl;
 
 	//mpz_class p("115396624046509855500193098450942091340358892908888356557165444351499881695511");
 	//mpz_class q("98738332208726129244226887848246886965304787986285813154910268348013862125541");
@@ -112,7 +110,6 @@ int main() {
 	std::vector<Matrix> matrix_as;
 	std::vector<mpz_class> hash_Hs;
 
-	cout << "Generating Shares " << endl;
 	std::vector<microseconds> gen_shares_timing;
 	for (int i = 0; i < NR_CLIENTS; i++) {
 		Client c = clients[i];
@@ -139,12 +136,11 @@ int main() {
 		}
 
 	}
-	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
 	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
 			<< " microseconds" << endl;
 
-	cout << "Generate Partial Evals " << endl;
+	std::vector<microseconds> partial_evals_timing;
 
 	std::map<int, mpz_class> partial_evals;
 	for (int j = 0; j < NR_SERVERS; j++) {
@@ -155,25 +151,25 @@ int main() {
 		auto duration_eval = duration_cast<microseconds>(
 				final_partial_eval - start_partial_eval);
 
-		cout << "Time taken by partial_eval: " << duration_eval.count()
-				<< " microseconds" << endl;
+		partial_evals_timing.push_back(duration_eval);
+
+
 
 		partial_evals.insert(std::pair<int, mpz_class>(s.getJ(), partial));
 	}
+	sort(partial_evals_timing.begin(), partial_evals_timing.end());
+	cout << "Time taken by final_eval: " << partial_evals_timing[NR_SERVERS/2].count()
+				<< " microseconds" << endl;
 
-	cout << "Finish Partial Evals " << endl;
 
-	cout << "Generate Final Evals " << endl;
 	auto start_final_eval = high_resolution_clock::now();
 	mpz_class y = tss.final_eval(partial_evals);
 	auto final_final_eval = high_resolution_clock::now();
 	auto duration_fina_eval = duration_cast<nanoseconds>(
 			final_final_eval - start_final_eval);
-	cout << "Finish Final Evals " << endl;
 	cout << "Time taken by final_eval: " << duration_fina_eval.count()
 			<< " nanoseconds" << endl;
 
-	cout << "Generate Partial Proofs  " << endl;
 	auto start_partial_proof = high_resolution_clock::now();
 	std::map<int, std::map<int, mpz_class>> r = tss.partial_proof(omegas,
 			hash_Hs, matrix_as, N, phi_N);
@@ -183,9 +179,7 @@ int main() {
 
 	cout << "Time taken by partial_proof: " << duration_proof.count()
 			<< " microseconds" << endl;
-	cout << "Finish Partial Proofs  " << endl;
 
-	cout << "Generate Final Proof  " << endl;
 	auto start_final_proof = high_resolution_clock::now();
 	mpz_class sigma = tss.final_proof(r, pub_keys, hash_Hs, matrix_as, N,
 			phi_N);
@@ -195,7 +189,6 @@ int main() {
 
 	cout << "Time taken by final_proof: " << duration_final_proof.count()
 			<< " microseconds" << endl;
-	cout << "Finish Final Proof  " << endl;
 
 	auto start_verify = high_resolution_clock::now();
 	int result = tss.verify(hash_Hs, sigma, y);
@@ -206,7 +199,6 @@ int main() {
 	cout << "Time taken by verify: " << duration_verify.count()
 			<< " microseconds" << endl;
 	if (result == 1) {
-		std::cout << "PERFECT!!! " << std::endl;
 		std::cout << "y = " << y << std::endl;
 	} else {
 		std::cout << "WRONG!!! " << std::endl;

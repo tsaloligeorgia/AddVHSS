@@ -235,9 +235,9 @@ int VHSS_LHS::verify(VerificationKey vk, Proof final_proof, mpz_class y) {
 	mpz_powm(left_part.get_mpz_t(), final_proof.getX().get_mpz_t(),
 			e_n.get_mpz_t(), vk.getNHat().get_mpz_t());
 
-	std::cout << "Left part: " << left_part << std::endl;
+	/*std::cout << "Left part: " << left_part << std::endl;
 	std::cout << "right_part: " << right_part << std::endl;
-
+*/
 	if (mpz_cmp(left_part.get_mpz_t(), right_part.get_mpz_t()) == 0)
 		return 1;
 
