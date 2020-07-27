@@ -13,6 +13,8 @@ public:
 	void generate_shares(std::map<int, mpz_class> *shares);
 
 	int getI();
+
+	mpz_class getSecretInput();
 private:
 	int i;
 	mpz_class secret_input;

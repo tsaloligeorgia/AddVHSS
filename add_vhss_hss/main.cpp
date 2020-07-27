@@ -77,7 +77,7 @@ int main() {
 	}
 	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
-	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
+	cout << "Time taken by generate_shares: " << gen_shares_timing[NR_CLIENTS/2].count()
 					<< " microseconds" << endl;
 
 	/*for (microseconds duration : gen_shares_timing) {

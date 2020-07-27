@@ -84,10 +84,10 @@ int main() {
 
 	for (int i = 1; i < NR_CLIENTS + 1; i++) {
 		if (i != (NR_CLIENTS)) {
-			Client c(i, mpz_class(i + 1), mpz_class(0), lhs);
+			Client c(i, mpz_class(2), mpz_class(0), lhs);
 			clients.push_back(c);
 		} else {
-			Client c(i, mpz_class(i + 1), mpz_class(0), lhs);
+			Client c(i, mpz_class(2), mpz_class(0), lhs);
 			clients.push_back(c);
 		}
 	}
@@ -121,7 +121,7 @@ int main() {
 
 	cout << "Finished Shares " << endl;
 	sort(gen_shares_timing.begin(), gen_shares_timing.end());
-	cout << "Time taken by generate_shares: " << gen_shares_timing[0].count()
+	cout << "Time taken by generate_shares: " << gen_shares_timing[NR_CLIENTS/2].count()
 			<< " microseconds" << endl;
 
 	cout << "Generate Partial Evals " << endl;
@@ -156,37 +156,46 @@ int main() {
 	cout << "y : " << y << std::endl;
 
 	cout << "Generate Partial Proofs  " << endl;
+	std::vector<microseconds> timing_partial_proofs;
 	std::vector<Proof> sigmas;
 	mpz_class ris = 0;
 	for (int i = 1; i < NR_CLIENTS + 1; i++) {
 		Proof sigma;
+		Client c = clients[i-1];
 		if (i != (NR_CLIENTS)) {
 			mpz_class ri(1);
 			ris = ris + ri;
 			auto start_partial_proof = high_resolution_clock::now();
-			lhs.partial_proof(sk, vk, mpz_class(3), mpz_class(i + 1), i,
+			lhs.partial_proof(sk, vk, mpz_class(3), c.getSecretInput(), i,
 					&sigma);
 			auto final_partial_proof = high_resolution_clock::now();
 			auto duration_proof = duration_cast<microseconds>(
 					final_partial_proof - start_partial_proof);
 
+			timing_partial_proofs.push_back(duration_proof);
+/*
 			cout << "Time taken by partial_proof: " << duration_proof.count()
-					<< " microseconds" << endl;
+					<< " microseconds" << endl;*/
 			sigmas.push_back(sigma);
 		} else {
 			auto start_partial_proof = high_resolution_clock::now();
-			lhs.partial_proof(sk, vk, mpz_class(3), mpz_class(i + 1), i,
+			lhs.partial_proof(sk, vk, mpz_class(3), c.getSecretInput(), i,
 					&sigma);
 			auto final_partial_proof = high_resolution_clock::now();
 			auto duration_proof = duration_cast<microseconds>(
 					final_partial_proof - start_partial_proof);
 
-			cout << "Time taken by partial_proof: " << duration_proof.count()
-					<< " microseconds" << endl;
+/*			cout << "Time taken by partial_proof: " << duration_proof.count()
+					<< " microseconds" << endl;*/
 			sigmas.push_back(sigma);
+			timing_partial_proofs.push_back(duration_proof);
 
 		}
 	}
+
+	sort(timing_partial_proofs.begin(), timing_partial_proofs.end());
+	cout << "Time taken by partial_proof: " << timing_partial_proofs[NR_CLIENTS/2].count()
+				<< " microseconds" << endl;
 
 	cout << "Finish Partial Proofs  " << endl;
 	Proof final_p;

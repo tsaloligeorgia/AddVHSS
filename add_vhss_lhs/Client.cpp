@@ -20,3 +20,7 @@ void Client::generate_shares(std::map<int, mpz_class> *shares) {
 int Client::getI(){
 	return this->i;
 }
+
+mpz_class Client::getSecretInput(){
+	return this->secret_input;
+}

@@ -2,9 +2,9 @@
 #define PARAMS_H_
 
 
-#define FINITE_FIELD 3911
+#define FINITE_FIELD 8068725504281211481
 #define G 2
-#define NR_CLIENTS 	1000
+#define NR_CLIENTS  600
 #define NR_SERVERS  3
 #define THRESHOLD_CLIENTS  2
 
