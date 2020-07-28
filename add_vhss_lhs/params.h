@@ -5,7 +5,7 @@
 #define FINITE_FIELD 8068725504281211481
 #define SECURITY  128
 #define G 2
-#define NR_CLIENTS 	500
+#define NR_CLIENTS  1000
 #define NR_SERVERS  3
 #define THRESHOLD_CLIENTS  2
 

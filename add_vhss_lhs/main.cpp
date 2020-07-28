@@ -1,4 +1,3 @@
-#include<bits/stdc++.h>
 #include <gmpxx.h>
 #include <vector>
 #include <map>
