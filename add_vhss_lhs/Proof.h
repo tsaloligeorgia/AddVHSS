@@ -1,10 +1,3 @@
-/*
- * Proof.h
- *
- *  Created on: Jul 24, 2020
- *      Author: yoda
- */
-
 #ifndef PROOF_H_
 #define PROOF_H_
 
