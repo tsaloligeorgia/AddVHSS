@@ -2,6 +2,9 @@
 #include <vector>
 #include <map>
 #include <chrono>
+#include <fstream>
+#include <string>
+
 
 #include "Matrix.h"
 #include "VHSSTSS.h"
@@ -205,4 +208,3 @@ int main() {
 
 	return 0;
 }
-
