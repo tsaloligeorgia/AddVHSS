@@ -29,10 +29,10 @@ public:
 
 	mpz_class final_eval(std::map<int, mpz_class> partial_evaluations);
 
-	void partial_proof(SecretKey sk, VerificationKey vk, mpz_class fid,
+	void partial_proof(SecretKey *sk, VerificationKey *vk, mpz_class fid,
 			mpz_class x_i, int i, Proof *sigma);
 
-	void final_proof(VerificationKey vk, mpz_class fid,
+	void final_proof(VerificationKey *vk, mpz_class fid,
 			std::vector<Proof> sigmas, Proof *final_proof);
 
 	int verify(VerificationKey vk, Proof final_proof, mpz_class y);

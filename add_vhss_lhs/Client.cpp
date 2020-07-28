@@ -22,5 +22,5 @@ int Client::getI(){
 }
 
 mpz_class Client::getSecretInput(){
-	return this->secret_input;
+	return this->secret_input + random_e;
 }

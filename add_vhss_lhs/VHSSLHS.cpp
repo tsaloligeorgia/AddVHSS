@@ -23,11 +23,11 @@ void VHSS_LHS::key_gen(mpz_class p, mpz_class q, SecretKey *secret_key,
 
 	mpz_class g1 = VHSS_LHS::random_z_star(n_hat, 2);
 
-	std::vector<mpz_class> hs;
+	/*std::vector<mpz_class> hs;
 	for (int i = 0; i < NR_CLIENTS; i++) {
 		mpz_class random = VHSS_LHS::random_z_star(n_hat, i + 100);
 		hs.push_back(random);
-	}
+	}*/
 
 	/*VerificationKey vk_t;
 	SecretKey sk_t;*/
@@ -40,7 +40,7 @@ void VHSS_LHS::key_gen(mpz_class p, mpz_class q, SecretKey *secret_key,
 
 	vk->setG1(g1);
 
-	vk->setHs(hs);
+	//vk->setHs(hs);
 
 	//*vk = vk_t;
 
@@ -96,18 +96,19 @@ mpz_class VHSS_LHS::final_eval(std::map<int, mpz_class> partial_evaluations) {
 
 }
 
-void VHSS_LHS::partial_proof(SecretKey sk, VerificationKey vk, mpz_class fid,
+void VHSS_LHS::partial_proof(SecretKey *sk, VerificationKey *vk, mpz_class fid,
 		mpz_class x_i_R, int i, Proof *sigma) {
 
-	mpz_class g = vk.getG();
-	mpz_class n_hat = vk.getNHat();
-	mpz_class g1 = vk.getG1();
-	mpz_class hi = vk.getHS()[i - 1];
+	mpz_class g = vk->getG();
+	mpz_class n_hat = vk->getNHat();
+	mpz_class g1 = vk->getG1();
+	mpz_class hi = VHSS_LHS::random_z_star(n_hat, i + 100);
+	vk->addHi(hi);
 
-	mpz_class phi = (sk.getP() - mpz_class(1)) * (sk.getQ() - mpz_class(1));
+	mpz_class phi = (sk->getP() - mpz_class(1)) * (sk->getQ() - mpz_class(1));
 
 	mpz_class e = VHSS_LHS::HashF(fid, mpz_class(FINITE_FIELD));
-	mpz_class e_n = e * vk.getN();
+	mpz_class e_n = e * vk->getN();
 
 	unsigned long seed = rand() % 10 + 1;
 	gmp_randstate_t rstate;
@@ -159,18 +160,18 @@ void VHSS_LHS::partial_proof(SecretKey sk, VerificationKey vk, mpz_class fid,
 
 }
 
-void VHSS_LHS::final_proof(VerificationKey vk, mpz_class fid,
+void VHSS_LHS::final_proof(VerificationKey *vk, mpz_class fid,
 		std::vector<Proof> sigmas, Proof *final_proof) {
 	mpz_class final_proof_result;
 
 	mpz_class e = VHSS_LHS::HashF(fid, mpz_class(FINITE_FIELD));
-	mpz_class e_n = e * vk.getN();
+	mpz_class e_n = e * vk->getN();
 
 	mpz_class prod_partial_proof(1);
 	for (unsigned int i = 0; i < sigmas.size(); i++) {
 		prod_partial_proof = (prod_partial_proof * sigmas[i].getX());
 	}
-	prod_partial_proof = prod_partial_proof % vk.getNHat();
+	prod_partial_proof = prod_partial_proof % vk->getNHat();
 
 	mpz_class sum_s_i(0);
 	for (unsigned int i = 0; i < sigmas.size(); i++) {
@@ -181,18 +182,18 @@ void VHSS_LHS::final_proof(VerificationKey vk, mpz_class fid,
 	mpz_class tmp = sum_s_i - s;
 
 	mpz_class inv_t;
-	mpz_invert(inv_t.get_mpz_t(), e_n.get_mpz_t(), vk.getNHat().get_mpz_t());
-	mpz_class s_prime = tmp * inv_t % vk.getNHat();
+	mpz_invert(inv_t.get_mpz_t(), e_n.get_mpz_t(), vk->getNHat().get_mpz_t());
+	mpz_class s_prime = tmp * inv_t % vk->getNHat();
 
 	mpz_class low_part;
-	mpz_powm(low_part.get_mpz_t(), vk.getG().get_mpz_t(), s_prime.get_mpz_t(),
-			vk.getNHat().get_mpz_t());
+	mpz_powm(low_part.get_mpz_t(), vk->getG().get_mpz_t(), s_prime.get_mpz_t(),
+			vk->getNHat().get_mpz_t());
 
 	mpz_class inv_low;
 	mpz_invert(inv_low.get_mpz_t(), low_part.get_mpz_t(),
-			vk.getNHat().get_mpz_t());
+			vk->getNHat().get_mpz_t());
 
-	mpz_class x_tilda = (prod_partial_proof * inv_low) % vk.getNHat();
+	mpz_class x_tilda = (prod_partial_proof * inv_low) % vk->getNHat();
 
 	/*
 	 std::cout << " e_n " << e_n << " x_tilda = " << x_tilda << " low_part = "
@@ -217,7 +218,7 @@ void VHSS_LHS::final_proof(VerificationKey vk, mpz_class fid,
 int VHSS_LHS::verify(VerificationKey vk, Proof final_proof, mpz_class y) {
 	mpz_class prod(1);
 	for (int i = 0; i < NR_CLIENTS; i++) {
-		prod = prod * vk.getHS()[i];
+		prod = prod * vk.getHS().at(i);
 	}
 
 	mpz_class g_power_s;

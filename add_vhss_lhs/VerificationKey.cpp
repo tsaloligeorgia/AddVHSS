@@ -45,7 +45,6 @@ mpz_class VerificationKey::getNHat() {
 	return this->N_hat;
 }
 
-
 mpz_class VerificationKey::getG() {
 	return this->g;
 }
@@ -56,4 +55,14 @@ mpz_class VerificationKey::getG1() {
 
 std::vector<mpz_class> VerificationKey::getHS() {
 	return this->Hs;
+}
+
+void VerificationKey::addHi(mpz_class hi) {
+	std::vector<mpz_class>::iterator it;
+
+	it = this->Hs.begin();
+	it = this->Hs.insert(it, hi);
+	/*for (size_t i = 0; i <this->Hs->size(); i++) {
+	 std::cout << this->Hs->at(i) << std::endl;
+	 }*/
 }

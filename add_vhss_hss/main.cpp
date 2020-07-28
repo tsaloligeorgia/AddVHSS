@@ -46,7 +46,7 @@ void read_file(std::vector<mpz_class> *to_save) {
 }
 
 int main() {
-	print_parameters();
+	//print_parameters();
 
 	std::vector<mpz_class> input_data;
 
@@ -150,7 +150,7 @@ int main() {
 	cout << "Time taken by partial_proof: " << partial_proofs_timing[NR_SERVERS/2].count()
 					<< " microseconds" << endl;
 
-	cout << "Time taken by partial_eval: " << partial_proofs_timing[NR_SERVERS/2].count()
+	cout << "Time taken by partial_eval: " << partial_evals_timing[NR_SERVERS/2].count()
 					<< " microseconds" << endl;
 
 	auto start_final_eval = high_resolution_clock::now();

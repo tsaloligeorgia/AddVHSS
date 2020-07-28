@@ -57,11 +57,11 @@ public:
 		mpz_init(prime);
 		mpz_urandomb(result, state, size);
 
-		mpz_nextprime(prime, result);
+		mpz_probab_safe_prime_p_next(prime, result, 50);
 
 		while ((mpz_cmp(prime, pp.get_mpz_t()) == 0)) {
 			mpz_urandomb(result, state, size);
-			mpz_nextprime(prime, result);
+			mpz_probab_safe_prime_p_next(prime, result, 50);
 
 		}
 
@@ -76,72 +76,106 @@ public:
 	}
 	;
 
+	static int mpz_probab_safe_prime_p(mpz_t n, int reps) {
+		mpz_t m;
+		int res;
+
+		if (!mpz_probab_prime_p(n, reps + 1)) {
+			return 0;
+		}
+
+		mpz_init(m);
+		mpz_sub_ui(m, n, 1L);
+		mpz_div_ui(m, m, 2L);
+
+		res = mpz_probab_prime_p(m, reps + 1);
+
+		mpz_clear(m);
+
+		return res;
+	}
+
+	static void mpz_probab_safe_prime_p_next(mpz_t rop, mpz_t n, int reps) {
+		int increased = 0;
+
+		mpz_set(rop, n);
+
+		if (mpz_cmp_ui(rop, 5) < 0) {
+			mpz_set_ui(rop, 5);
+		} else if (mpz_cmp_ui(rop, 7) < 0) {
+			mpz_set_ui(rop, 7);
+		} else {
+
+			/* Make sure that rop is odd. */
+			if (!mpz_tstbit(rop, 0)) {
+				mpz_add_ui(rop, rop, 1L);
+				increased = 1;
+			}
+
+			/* Make sure that m is odd, where rop=2m+1. */
+			if (!mpz_tstbit(rop, 1)) {
+				mpz_add_ui(rop, rop, 2L);
+				increased = 1;
+			}
+
+			/* If both rop and m were already odd, then we add 4. */
+			if (!increased) {
+				mpz_add_ui(rop, rop, 4L);
+			}
+
+			while (mpz_probab_safe_prime_p(rop, reps) == 0) {
+				mpz_add_ui(rop, rop, 4L);
+			}
+		}
+	}
+
 	static void generate_primeN(int size, mpz_class N, mpz_class *q,
 			mpz_class *p, mpz_class *n_hat) {
-		gmp_randstate_t state;
-		gmp_randinit_default(state);
-		unsigned long tmp = time(NULL);
-		gmp_randseed_ui(state, tmp);
 
-		mpz_t result, tmp_prime, p_h, q_h, phi_n, gcd_r, p_h_1, q_h_1, n_hat_t;
+		gmp_randstate_t state;
+		gmp_randinit_mt(state);
+		unsigned long tmp = rand();
+		gmp_randseed_ui(state, tmp);
+		mpz_class safe_prime_p;
+		mpz_class safe_prime_q;
 		mpz_class one(1);
 
+		mpz_t result, gcd_r, phi_n, p_t, q_t;
 		mpz_init(result);
-		mpz_init(tmp_prime);
-		mpz_init(p_h);
-		mpz_init(q_h);
-		mpz_init(phi_n);
 		mpz_init(gcd_r);
-		mpz_init(p_h_1);
-		mpz_init(q_h_1);
-		mpz_init(n_hat_t);
-		mpz_urandomb(result, state, size);
+		mpz_init(phi_n);
+		mpz_init(p_t);
+		mpz_init(q_t);
 
-		mpz_nextprime(tmp_prime, result);
-
-		mpz_mul_ui(p_h, tmp_prime, 2);
-		mpz_add_ui(p_h, p_h, 1);
 		do {
-			do {
-
-				mpz_urandomb(result, state, size);
-				mpz_nextprime(tmp_prime, result);
-				mpz_mul_ui(p_h, tmp_prime, 2);
-				mpz_add_ui(p_h, p_h, 1);
-
-			} while (mpz_probab_prime_p(p_h, 100) != 2);
+			mpz_urandomb(result, state, size);
+			mpz_probab_safe_prime_p_next(safe_prime_p.get_mpz_t(), result, 50);
 
 			do {
 				mpz_urandomb(result, state, size);
-				mpz_nextprime(tmp_prime, result);
-				mpz_mul_ui(q_h, tmp_prime, 2);
-				mpz_add_ui(q_h, q_h, 1);
+				mpz_probab_safe_prime_p_next(safe_prime_q.get_mpz_t(), result,
+						50);
+			} while (mpz_cmp(safe_prime_p.get_mpz_t(), safe_prime_q.get_mpz_t())
+					== 0);
 
-			} while (mpz_probab_prime_p(q_h, 100) != 2 || mpz_cmp(q_h, p_h) == 0);
-			mpz_sub_ui(p_h_1, p_h, 1);
-			mpz_sub_ui(q_h_1, q_h, 1);
-			mpz_mul(phi_n, p_h_1, q_h_1);
+			mpz_sub_ui(p_t, safe_prime_p.get_mpz_t(), 1L);
+			mpz_sub_ui(q_t, safe_prime_q.get_mpz_t(), 1L);
+			mpz_mul(phi_n, p_t, q_t);
 
 			mpz_gcd(gcd_r, N.get_mpz_t(), phi_n);
+
 		} while (mpz_cmp(gcd_r, one.get_mpz_t()) != 0);
 
-		mpz_mul(n_hat_t, q_h, p_h);
-		*q = mpz_class(q_h);
-		*p = mpz_class(p_h);
-		*n_hat = mpz_class(n_hat_t);
-
-		gmp_randclear(state);
+		*p = mpz_class(safe_prime_p);
+		*q = mpz_class(safe_prime_q);
+		*n_hat = mpz_class(safe_prime_p*safe_prime_q);
 
 		mpz_clear(result);
-		mpz_clear(tmp_prime);
-		mpz_clear(p_h);
-		mpz_clear(q_h);
-		mpz_clear(phi_n);
 		mpz_clear(gcd_r);
-		mpz_clear(p_h_1);
-		mpz_clear(q_h_1);
-		mpz_clear(n_hat_t);
-
+		mpz_clear(phi_n);
+		mpz_clear(p_t);
+		mpz_clear(q_t);
+		gmp_randclear(state);
 	}
 	;
 

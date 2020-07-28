@@ -11,6 +11,8 @@
 #include <gmpxx.h>
 #include <iostream>
 
+#include "params.h"
+
 class VerificationKey {
 public:
 	VerificationKey();
@@ -25,6 +27,8 @@ public:
 	void setG1(mpz_class g1);
 
 	void setHs(std::vector<mpz_class> Hs);
+
+	void addHi(mpz_class hi);
 
 	mpz_class getN();
 

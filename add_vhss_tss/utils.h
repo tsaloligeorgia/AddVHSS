@@ -48,7 +48,7 @@ public:
 
 		gmp_randstate_t state;
 		gmp_randinit_default(state);
-		unsigned long tmp = time(NULL) + mpz_get_ui(pp.get_mpz_t());
+		unsigned long tmp = rand();
 		gmp_randseed_ui(state, tmp);
 
 		mpz_t result, prime;
@@ -57,11 +57,11 @@ public:
 		mpz_init(prime);
 		mpz_urandomb(result, state, size);
 
-		mpz_nextprime(prime, result);
+		mpz_probab_safe_prime_p_next(prime, result, 50);
 
 		while ((mpz_cmp(prime, pp.get_mpz_t()) == 0)) {
 			mpz_urandomb(result, state, size);
-			mpz_nextprime(prime, result);
+			mpz_probab_safe_prime_p_next(prime, result, 50);
 
 		}
 
@@ -75,6 +75,59 @@ public:
 		return to_return;
 	}
 	;
+
+	static int mpz_probab_safe_prime_p(mpz_t n, int reps) {
+		mpz_t m;
+		int res;
+
+		if (!mpz_probab_prime_p(n, reps + 1)) {
+			return 0;
+		}
+
+		mpz_init(m);
+		mpz_sub_ui(m, n, 1L);
+		mpz_div_ui(m, m, 2L);
+
+		res = mpz_probab_prime_p(m, reps + 1);
+
+		mpz_clear(m);
+
+		return res;
+	}
+
+	static void mpz_probab_safe_prime_p_next(mpz_t rop, mpz_t n, int reps) {
+		int increased = 0;
+
+		mpz_set(rop, n);
+
+		if (mpz_cmp_ui(rop, 5) < 0) {
+			mpz_set_ui(rop, 5);
+		} else if (mpz_cmp_ui(rop, 7) < 0) {
+			mpz_set_ui(rop, 7);
+		} else {
+
+			/* Make sure that rop is odd. */
+			if (!mpz_tstbit(rop, 0)) {
+				mpz_add_ui(rop, rop, 1L);
+				increased = 1;
+			}
+
+			/* Make sure that m is odd, where rop=2m+1. */
+			if (!mpz_tstbit(rop, 1)) {
+				mpz_add_ui(rop, rop, 2L);
+				increased = 1;
+			}
+
+			/* If both rop and m were already odd, then we add 4. */
+			if (!increased) {
+				mpz_add_ui(rop, rop, 4L);
+			}
+
+			while (mpz_probab_safe_prime_p(rop, reps) == 0) {
+				mpz_add_ui(rop, rop, 4L);
+			}
+		}
+	}
 
 	static void generate_primeN(int size, mpz_class N, mpz_class *q,
 			mpz_class *p, mpz_class *n_hat) {
